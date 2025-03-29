@@ -32,8 +32,8 @@ public class Memory
         }
     }
 
-    int Height { set; get; }
-    int Width { set; get; }
+    public int Height { private set; get; }
+    public int Width { private set; get; }
     (int, bool)[,] matrix;
     public Memory(int height, int width)
     {
