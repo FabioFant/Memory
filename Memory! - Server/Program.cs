@@ -2,8 +2,6 @@
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 
 namespace Memory____Server
 {
@@ -46,7 +44,7 @@ namespace Memory____Server
         {
             IPHostEntry host = Dns.GetHostEntry("localhost");
             IPAddress ipAddress = host.AddressList.First();
-            int port = FindFreePort();
+            int port = 12345;
 
             IPEndPoint localEndPoint = new IPEndPoint(ipAddress, port);
 
