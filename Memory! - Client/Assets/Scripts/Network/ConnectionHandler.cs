@@ -5,40 +5,32 @@ using System.Net;
 using System.Text;
 using System.Collections.Generic;
 using Unity.VisualScripting.FullSerializer;
+using System.Threading;
+using System.Threading.Tasks;
 
-public class CreateConnection : MonoBehaviour
+public class ConncetionHandler : MonoBehaviour
 {
+    IPEndPoint remoteEP;
     Socket socket;
+    GameManager gameManager;
+
     public void StartConnection()
     {
         try
         {
             IPHostEntry host = Dns.GetHostEntry("localhost");
             IPAddress ipAddress = host.AddressList[0];
-            IPEndPoint remoteEP = new IPEndPoint(ipAddress, 12345);
+            remoteEP = new IPEndPoint(ipAddress, 12345);
             socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-            try
-            {
-                Debug.Log("Connecting to the server...");
-                socket.Connect(remoteEP);
-                Debug.Log("Socket connected to " + socket.RemoteEndPoint.ToString());
-
-                Dictionary<string, object> memorySettings = ReceiveData();
-                Memory memory = new Memory((int)memorySettings["Height"], (int)memorySettings["Width"]);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError("Error: " + e.Message);
-            }
+            Task.Run(ConnectToServer);
         }
         catch(Exception e)
         {
             Debug.LogError("Error: " + e.Message);
         }
     }
-
-    public Dictionary<string, object> ReceiveData()
+    Dictionary<string, string> ReceiveData()
     {
         try
         {
@@ -50,7 +42,7 @@ public class CreateConnection : MonoBehaviour
 
             fsData data = fsJsonParser.Parse(json);
             fsSerializer serializer = new fsSerializer();
-            Dictionary<string, object> result = new Dictionary<string, object>();
+            Dictionary<string, string> result = new Dictionary<string, string>();
             serializer.TryDeserialize(data, ref result).AssertSuccess();
 
             Debug.Log("Received data: " + json);
@@ -63,15 +55,26 @@ public class CreateConnection : MonoBehaviour
         }
     }
 
-    // Start is called before the first frame update
-    void Start()
+    void ConnectToServer()
     {
-        
+        try
+        {
+            Debug.Log("Connecting to the server...");
+            socket.Connect(remoteEP);
+            Debug.Log("Socket connected to " + socket.RemoteEndPoint.ToString());
+
+            Dictionary<string, string> memorySettings = ReceiveData();
+            gameManager
+            
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("Error: " + e.Message);
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Start()
     {
-        
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
 }

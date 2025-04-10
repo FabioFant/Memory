@@ -73,7 +73,8 @@ namespace Memory____Server
                 var data = new Dictionary<string, object>
                 {
                     { "Height", memory.Height },
-                    { "Width", memory.Width }
+                    { "Width", memory.Width },
+                    { "Matrix", memory.GetMatrix() }
                 };
 
                 SendData(client1, data);
@@ -93,6 +94,10 @@ namespace Memory____Server
                     string json = JsonSerializer.Serialize(data);
                     byte[] bytes = Encoding.UTF8.GetBytes(json);
                     destination.Send(bytes);
+
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    Console.WriteLine($"Data sent to {destination.RemoteEndPoint}: {json}");
+                    Console.ForegroundColor = ConsoleColor.White;
                 }
                 catch (Exception e)
                 {

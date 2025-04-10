@@ -70,4 +70,22 @@ public class Memory
 
         return true;
     }
+
+    public (int, bool)[,] GetMatrix()
+    {
+        int rows = matrix.GetLength(0);
+        int cols = matrix.GetLength(1);
+
+        (int, bool)[,] copy = new (int, bool)[rows, cols];
+
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                copy[i, j] = matrix[i, j];
+            }
+        }
+
+        return copy;
+    }
 }
