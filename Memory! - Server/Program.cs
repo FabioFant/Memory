@@ -7,7 +7,7 @@ namespace Memory____Server
 {
     internal class Program
     {
-        const int MAX_LENGHT = 7;
+        const int MAX_LENGHT = 5;
         const int MIN_LENGHT = 3;
         static Random rnd = new Random();
         static Memory memory;
@@ -32,10 +32,10 @@ namespace Memory____Server
                 Console.WriteLine($"Waiting for connection on port {port}...");
 
                 client1 = listener.Accept();
-                WriteMessage("1° CLIENT CONNECTED", ConsoleColor.DarkBlue);
+                WriteMessage($"1° CLIENT CONNECTED ({client1.RemoteEndPoint})", ConsoleColor.DarkBlue);
 
                 client2 = listener.Accept();
-                WriteMessage("2° CLIENT CONNECTED", ConsoleColor.DarkBlue);
+                WriteMessage($"2° CLIENT CONNECTED ({client2.RemoteEndPoint})", ConsoleColor.DarkBlue);
 
                 int height = 0;
                 int width = 0;
@@ -50,6 +50,7 @@ namespace Memory____Server
                 SendData(client1, new Dictionary<string, object> { { "Matrix", initMatrix }, { "Turn", true } });
                 SendData(client2, new Dictionary<string, object> { { "Matrix", initMatrix }, { "Turn", false } });
 
+                // Ready
                 var result1 = ReceiveData(client1);
                 var result2 = ReceiveData(client2);
 
@@ -68,12 +69,13 @@ namespace Memory____Server
         // while ( !memory.IsFinished() )
         // client - server --> row1: int, col1: int, row2: int, col2: int
         // server - client --> error: int ( if error != 0 then return to previous step )
-        // server - both clients --> row1: int, col1: int, row2: int, col2: int, result: bool, turn: bool, gameover: int
+        // server - both clients --> row1: int, col1: int, row2: int, col2: int, error: int, result: bool, turn: bool, gameover: int
 
         // gameover:
         //  0: game is not over
         //  1: game is over ( player 1 wins )
         //  2: game is over ( player 2 wins )
+        //  3: game is over ( draw )
 
         // error:
         //  0: no error
@@ -113,7 +115,7 @@ namespace Memory____Server
                         error = 0;
                         try
                         {
-                            result = memory.Pick((int)rd["Row1"], (int)rd["Col1"], (int)rd["Row2"], (int)rd["Col2"]);
+                            result = memory.Pick(Convert.ToInt32(rd["Row1"]), Convert.ToInt32(rd["Col1"]), Convert.ToInt32(rd["Row2"]), Convert.ToInt32(rd["Col2"]));
                         }
                         catch (InvalidOperationException e)
                         {
@@ -131,10 +133,21 @@ namespace Memory____Server
                         }
                     } while (error != 0);
 
+                    // Add points
+                    if(turn && result)
+                    {
+                        p1++;
+                    }
+                    else if (!turn && result)
+                    {
+                        p2++;
+                    }
+
                     // Define the end of the game
                     if (memory.IsFinished())
                     {
                         gameover = p1 > p2 ? 1 : 2;
+                        gameover = p1 == p2 ? 3 : gameover;
                     }
                     else
                     {
@@ -146,19 +159,24 @@ namespace Memory____Server
                     // Response to both clients
                     data = new Dictionary<string, object>
                     {
+                        { "Row1", Convert.ToInt32(rd["Row1"]) },
+                        { "Col1", Convert.ToInt32(rd["Col1"]) },
+                        { "Row2", Convert.ToInt32(rd["Row2"]) },
+                        { "Col2", Convert.ToInt32(rd["Col2"]) },
+                        { "Error", error },
                         { "Result", result },
-                        { "Row1", (int)rd["Row1"] },
-                        { "Col1", (int)rd["Col1"] },
-                        { "Row2", (int)rd["Row2"] },
-                        { "Col2", (int)rd["Col2"] },
                         { "Turn", turn },
-                        { "GameOver", gameover }
+                        { "GameOver", gameover },
+                        { "Points1", p1 },
+                        { "Points2", p2 } 
                     };
                     SendData(client1, data);
                     SendData(client2, data);
 
                     source = turn ? client1 : client2;
                 }
+                client1.Close();
+                client2.Close();
             }
             catch (Exception e)
             {
@@ -196,7 +214,7 @@ namespace Memory____Server
                 Console.WriteLine($"Waiting for data from {source.RemoteEndPoint}...");
                 Console.ForegroundColor = ConsoleColor.White;
 
-                byte[] bytes = new byte[1024];
+                byte[] bytes = new byte[4096];
                 source.Receive(bytes);
                 string json = Encoding.UTF8.GetString(bytes);
 
