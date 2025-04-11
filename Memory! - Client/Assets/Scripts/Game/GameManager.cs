@@ -1,7 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Newtonsoft.Json;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,14 +12,17 @@ public class GameManager : MonoBehaviour
 
     public void StartNewGame((int, bool)[,] matrix)
     {
+        Debug.Log("Creating game setup...");
+
         memory = new GameMemory(matrix);
         colors = new Color[memory.Height * memory.Width / 2];
         for (int i = 0; i < colors.Length; i++)
         {
             colors[i] = Random.ColorHSV();
         }
-
         SetupCardGrid();
+
+        Debug.Log("Game setup complete.");
     }
 
     void SetupCardGrid()
@@ -31,7 +33,10 @@ public class GameManager : MonoBehaviour
         }
 
         GridLayoutGroup gridLayout = container.GetComponent<GridLayoutGroup>();
-        gridLayout.constraintCount = memory.Width;
+
+        // IMPOSTA IL VINCOLO A COLONNE FISSE
+        gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        gridLayout.constraintCount = memory.Width; // Numero di colonne = larghezza matrice
 
         for (int row = 0; row < memory.Height; row++)
         {
@@ -41,5 +46,8 @@ public class GameManager : MonoBehaviour
                 newCard.name = $"{row}{col}";
             }
         }
+
+        // Opzionale: Forza l'aggiornamento del layout
+        LayoutRebuilder.ForceRebuildLayoutImmediate(container.GetComponent<RectTransform>());
     }
 }

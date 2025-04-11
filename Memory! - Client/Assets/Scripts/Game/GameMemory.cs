@@ -31,6 +31,8 @@ public class GameMemory
     public GameMemory((int, bool)[,] entry)
     {
         matrix = DuplicateMatrix(entry);
+        Height = matrix.GetLength(0);
+        Width = matrix.GetLength(1);
     }
 
     public bool Pick(int row1, int col1, int row2, int col2)
